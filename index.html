@@ -399,8 +399,17 @@
 
   <script>
     // 1) Set your Worker endpoint here
-    const WORKER_ENDPOINT = "https://mirso-scent-quiz.mirsoireland.workers.dev/";
-
+    fetch("https://mirso-scent-quiz.mirsoireland.workers.dev/submit", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    email,
+    consent: true,
+    result,
+    runnerUp,
+    sourceUrl: window.location.href
+  })
+})
     const fragranceData = {
       woody: {
         name: "MÍR SÓ Woody",
