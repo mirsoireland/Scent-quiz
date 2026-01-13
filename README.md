@@ -15,35 +15,7 @@ Quick Start
 3.  Customise URLs (see below)
 4.  Upload to your web host or use a free service like Netlify Drop
 ----
-Customisation Guide
-1.  Fix Product URLs (Important!)
-The #1 issue is broken product links. You must update these URLs to match your actual product pages:
-Find the  fragranceData  object (around line 308) and replace the three URLs:
-const fragranceData = {
-woody: {
-// ... other data ...
-url: "https://mirsoireland.com/products/YOUR-WOODY-PRODUCT-HANDLE"
-},
-fresh: {
-// ... other data ...
-url: "https://mirsoireland.com/products/YOUR-FRESH-PRODUCT-HANDLE"
-},
-citrus: {
-// ... other data ...
-url: "https://mirsoireland.com/products/YOUR-CITRUS-PRODUCT-HANDLE"
-}
-}
-Don't know your product handles?
-Go to each product page on your site and copy the URL from your browser. Examples:
-•  If your product page is: https://mirsoireland.com/products/mir-so-30ml-eau-de-parfum
-•  And you use variants: You likely need one URL with variant selection
-For a single product page with variants, change the url to your main product URL and add variant logic:
-// In the shop button click handler (around line 580), change:
-window.open(document.getElementById('shopUrl').value, '_blank')
-// To something like:
-const scent = document.getElementById('shopFragranceName').textContent.toLowerCase();
-window.open(https://mirsoireland.com/products/mir-so-30ml-eau-de-parfum?variant=${scent}, '_blank')
-(You'll need to check your Shopify/website variant parameter structure)
+
 2.  Replace Bottle Images
 Currently uses coloured blocks as placeholders. To add real product photos:
 Option A: CSS Background Images
