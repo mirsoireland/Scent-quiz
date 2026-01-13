@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MÍR SÓ Scent Finder</title>
+    <style>
+        :root {
+            --primary-colour: #2c3e50;
+            --accent-colour: #e74c3c;
+            --background-colour: #fafafa;
+            --card-background: #ffffff;
+            --text-colour: #2c3e50;
+            --border-colour: #e0e0e0;
+            --focus-colour: #3498db;
+            --progress-colour: #3498db;
+            --woody-colour: #8b7355;
+            --fresh-colour: #a8c8ec;
+            --citrus-colour: #ffb347;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--background-colour);
+            color: var(--text-colour);
+            line-height: 1.6;
+            padding: 1rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .quiz-container {
+            max-width: 600px;
+            margin: 0 auto;
+            width: 100%;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card {
+            background: var(--card-background);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            text-align: center;
+            color: var(--primary-colour);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #7f8c7d;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .intro-container {
+            text-align: center;
+        }
+
+        .intro-text {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            color: #2c3e50;
+        }
+
+        .bottle-visual {
+            width: 80px;
+            height: 120px;
+            margin: 0 auto 1.5rem;
+            border-radius: 8px 8px 20px 20px;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: transform 0.3s ease;
+        }
+
+        .bottle-visual.woody { 
+            background: linear-gradient(180deg, #a99a86 0%, #8b7355 100%);
+            border: 2px solid #6d5d46;
+        }
+        .bottle-visual.fresh { 
+            background: linear-gradient(180deg, #c5d8f0 0%, #a8c8ec 100%);
+            border: 2px solid #7fb3e6;
+        }
+        .bottle-visual.citrus { 
+            background: linear-gradient(180deg, #ffc966 0%, #ffb347 100%);
+            border: 2px solid #ff9e2c;
+        }
+
+        .progress-container {
+            margin-bottom: 2rem;
+            transition: opacity 0.3s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            font-size: 0.85rem;
+            color: #7f8c7d;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background-color: var(--border-colour);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--progress-colour);
+            transition: width 0.4s ease;
+            border-radius: 4px;
+        }
+
+        .question-container {
+            display: none;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .question-container.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+            animation: slideIn 0.4s ease forwards;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .question-title {
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary-colour);
+        }
+
+        .answers {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .answer-label {
+            display: block;
+            padding: 1rem;
+            border: 2px solid var(--border-colour);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: var(--card-background);
+        }
+
+        .answer-label:hover {
+            border-color: var(--focus-colour);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .answer-label:focus-within {
+            border-color: var(--focus-colour);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+
+        input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .answer-text {
+            font-weight: 500;
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        button:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: #ecf0f1;
+            color: var(--text-colour);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background-color: #bdc3c7;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-colour);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background-color: #34495e;
+        }
+
+        .btn-shop {
+            background-color: var(--accent-colour);
+            color: white;
+            width: 100%;
+            margin: 1.5rem 0 0.5rem;
+            font-size: 1rem;
+        }
+
+        .btn-shop:hover {
+            background-color: #c0392b;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .results-container {
+            display: none;
+        }
+
+        .results-container.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .fragrance-result {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .fragrance-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--primary-colour);
+        }
+
+        .fragrance-subtitle {
+            font-size: 1rem;
+            color: #7f8c7d;
+            margin-bottom: 1rem;
+        }
+
+        .why-text {
+            margin-bottom: 1rem;
+            font-style: italic;
+            color: #2c3e50;
+        }
+
+        .notes-label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .notes-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            list-style: none;
+            margin-bottom: 1rem;
+        }
+
+        .note-tag {
+            background: rgba(255,255,255,0.7);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            border: 1px solid var(--border-colour);
+        }
+
+        .runner-up {
+            background: rgba(255,255,255,0.6);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--accent-colour);
+        }
+
+        .runner-up-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .runner-up-reason {
+            font-size: 0.9rem;
+            color: #7f8c7d;
+        }
+
+        .email-capture {
+            background: rgba(236, 240, 241, 0.5);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            border: 1px dashed var(--border-colour);
+        }
+
+        .email-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--primary-colour);
+        }
+
+        .email-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-colour);
+            border-radius: 6px;
+            margin-bottom: 0.75rem;
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .email-input:focus {
+            outline: none;
+            border-color: var(--focus-colour);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+
+        .email-consent {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .email-consent input[type="checkbox"] {
+            margin-top: 0.25rem;
+            accent-color: var(--focus-colour);
+        }
+
+        .consent-text {
+            font-size: 0.85rem;
+            color: #7f8c7d;
+            line-height: 1.4;
+        }
+
+        .email-success {
+            display: none;
+            color: #27ae60;
+            font-weight: 500;
+            margin-top: 0.5rem;
+        }
+
+        .debug-view {
+            display: none;
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+
+        .debug-view.active {
+            display: block;
+        }
+
+        .debug-toggle {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.7rem;
+            background: rgba(0,0,0,0.2);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            opacity: 0.3;
+            transition: opacity 0.2s ease;
+        }
+
+        .debug-toggle:hover {
+            opacity: 1;
+        }
+
+        .analytics-summary {
+            background: rgba(52, 152, 219, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .analytics-summary h4 {
+            margin-bottom: 0.5rem;
+            color: var(--primary-colour);
+        }
+
+        footer {
+            text-align: center;
+            padding: 1rem;
+            font-size: 0.85rem;
+            color: #7f8c7d;
+        }
+
+        .restart-link {
+            text-align: center;
+            margin-top: 1rem;
+            display: block;
+            color: var(--focus-colour);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem;
+        }
+
+        .restart-link:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .card {
+                padding: 1.5rem;
+            }
+            
+            .navigation {
+                flex-direction: column;
+            }
+            
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <div class="card">
+            <h1>MÍR SÓ Scent Finder</h1>
+            
+            <!-- Intro Screen -->
+            <div id="introContainer" class="intro-container">
+                <p class="intro-text">Answer nine quick questions to discover which MÍR SÓ fragrance matches your style and personality.</p>
+                <div class="bottle-visual woody" style="opacity: 0.8; transform: scale(0.9);"></div>
+                <div class="bottle-visual fresh" style="opacity: 0.8; transform: scale(0.9);"></div>
+                <div class="bottle-visual citrus" style="opacity: 0.8; transform: scale(0.9);"></div>
+                <button class="btn-primary" onclick="startQuiz()" style="margin-top: 1.5rem;">Start Your Scent Journey</button>
+                <p style="margin-top: 1rem; font-size: 0.85rem; color: #7f8c7d;">Takes about 90 seconds</p>
+            </div>
+
+            <!-- Quiz Content -->
+            <div id="quizContent" style="display: none;">
+                <p class="subtitle">Find your perfect fragrance match</p>
+                
+                <div class="progress-container">
+                    <div class="progress-text" id="progressText">Question 1 of 9</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill" style="width: 11.11%"></div>
+                    </div>
+                </div>
+
+                <div id="questionContainer"></div>
+            </div>
+
+            <!-- Results -->
+            <div id="resultsContainer" class="results-container" aria-live="polite">
+                <div id="bottleVisual" class="bottle-visual"></div>
+                
+                <div class="fragrance-result">
+                    <div class="fragrance-name" id="primaryFragrance"></div>
+                    <p class="fragrance-subtitle">Your perfect match</p>
+                    <p class="why-text" id="whyText"></p>
+                    <span class="notes-label">Notes you might like:</span>
+                    <ul class="notes-list" id="notesList"></ul>
+                    
+                    <button class="btn-shop" onclick="window.open(document.getElementById('shopUrl').value, '_blank')" id="shopButton">
+                        View <span id="shopFragranceName"></span>
+                    </button>
+                    <input type="hidden" id="shopUrl" value="">
+                </div>
+
+                <div class="runner-up" id="runnerUpContainer">
+                    <div class="runner-up-title" id="runnerUpName"></div>
+                    <p class="runner-up-reason" id="runnerUpReason"></p>
+                </div>
+
+                <div class="email-capture">
+                    <label class="email-label" for="emailInput">Get your result sent to you</label>
+                    <input type="email" class="email-input" id="emailInput" placeholder="your@email.com">
+                    <div class="email-consent">
+                        <input type="checkbox" id="consentCheck">
+                        <label for="consentCheck" class="consent-text">I agree to receive updates about new scents and restocks. We respect your privacy.</label>
+                    </div>
+                    <button class="btn-primary" onclick="submitEmail()" style="width: 100%; margin-top: 0.5rem;">Send My Result</button>
+                    <div class="email-success" id="emailSuccess">✓ Result saved! We'll be in touch.</div>
+                </div>
+
+                <button class="btn-secondary" onclick="restartQuiz()" style="width: 100%; margin-top: 1rem;">Take the Quiz Again</button>
+                <a href="#" class="restart-link" onclick="restartQuiz()">Try for a different vibe</a>
+
+                <div class="analytics-summary" id="analyticsSummary">
+                    <h4>Behind the scenes</h4>
+                    <p>Most important question: <strong id="mostImportantQ"></strong></p>
+                    <p id="winningScentInfo"></p>
+                </div>
+
+                <div class="debug-view" id="debugView">
+                    <strong>Debug Scores:</strong><br>
+                    Woody: <span id="debugWoody"></span><br>
+                    Fresh: <span id="debugFresh"></span><br>
+                    Citrus: <span id="debugCitrus"></span>
+                </div>
+            </div>
+
+            <div class="navigation" id="navigation">
+                <button class="btn-secondary" id="backBtn" onclick="previousQuestion()" disabled>Back</button>
+                <button class="btn-primary" id="nextBtn" onclick="nextQuestion()" disabled>Next</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>Discover your fragrance at mirsoireland.com</footer>
+    <button class="debug-toggle" onclick="toggleDebug()" title="Toggle debug view">Debug</button>
+
+    <script>
+        // Analytics data stored locally
+        const analytics = JSON.parse(localStorage.getItem('mirsoAnalytics')) || {
+            totalQuizzes: 0,
+            scentWins: { woody: 0, fresh: 0, citrus: 0 },
+            questionImportance: Array(9).fill(0)
+        };
+
+        const fragranceData = {
+            woody: {
+                name: "MÍR SÓ Woody",
+                why: "You like depth, warmth, and a grounded feel. You suit richer notes that last and develop.",
+                notes: ["Agarwood (Oud)", "Incense", "Rose", "Raspberry", "Amberwood", "Saffron", "Birch", "Benzoin", "Geranium"],
+                runnerUpReason: "More warmth and depth.",
+                url: "https://mirsoireland.com/products/mir-so-woody-30ml-eau-de-parfum",
+                tone: "Warm, confident, and quietly powerful — just like you."
+            },
+            fresh: {
+                name: "MÍR SÓ Fresh", 
+                why: "You want a clean, crisp feel that works anywhere. You suit lighter woods with an airy lift.",
+                notes: ["Galbanum", "Bergamot", "Ginger", "Solar notes", "Sandalwood", "Cedarwood"],
+                runnerUpReason: "Cleaner and lighter.",
+                url: "https://mirsoireland.com/products/mir-so-fresh-30ml-eau-de-parfum",
+                tone: "Effortless, clear, and ready for anything — your kind of clean."
+            },
+            citrus: {
+                name: "MÍR SÓ Citrus",
+                why: "You want energy and lift with a bright edge. You suit citrus, spice, and tea-style depth.",
+                notes: ["Citron", "Calabrian bergamot", "Sicilian orange", "Tunisian neroli", "Nigerian ginger", "Ceylon cinnamon", "Chinese black tea", "Ambroxan", "Guaiac wood", "Olibanum"],
+                runnerUpReason: "Brighter and more lively.",
+                url: "https://mirsoireland.com/products/mir-so-citrus-30ml-eau-de-parfum",
+                tone: "Bright, curious, and full of possibility — let’s go."
+            }
+        };
+
+        const questions = [
+            {
+                id: 1,
+                text: "Your vibe on a normal day",
+                answers: [
+                    { text: "Clean and bright", points: { fresh: 3, woody: 0, citrus: 0 } },
+                    { text: "Warm and grounded", points: { fresh: 0, woody: 3, citrus: 0 } },
+                    { text: "Zesty and lively", points: { fresh: 0, woody: 0, citrus: 3 } }
+                ]
+            },
+            {
+                id: 2,
+                text: "When do you reach for fragrance most?",
+                answers: [
+                    { text: "Work or daytime plans", points: { fresh: 2, woody: 0, citrus: 1 } },
+                    { text: "Dinner, pub, or night out", points: { fresh: 0, woody: 2, citrus: 1 } },
+                    { text: "Weekends and casual days", points: { fresh: 1, woody: 0, citrus: 2 } }
+                ]
+            },
+            {
+                id: 3,
+                text: "Pick a smell you want to notice first",
+                answers: [
+                    { text: "Woods and smoke", points: { fresh: 0, woody: 3, citrus: 0 } },
+                    { text: "Crisp and airy", points: { fresh: 3, woody: 0, citrus: 0 } },
+                    { text: "Lemon and orange peel", points: { fresh: 0, woody: 0, citrus: 3 } }
+                ]
+            },
+            {
+                id: 4,
+                text: "Your ideal setting",
+                answers: [
+                    { text: "Rainy walk, coat on, cosy stop after", points: { fresh: 1, woody: 2, citrus: 0 } },
+                    { text: "Fresh sheets and a tidy room", points: { fresh: 2, woody: 0, citrus: 1 } },
+                    { text: "Sun on your face, windows open", points: { fresh: 1, woody: 0, citrus: 2 } }
+                ]
+            },
+            {
+                id: 5,
+                text: "What do you want your scent to say?",
+                answers: [
+                    { text: "Calm confidence", points: { fresh: 1, woody: 2, citrus: 0 } },
+                    { text: "Clean and put-together", points: { fresh: 2, woody: 0, citrus: 0 } },
+                    { text: "Fun and social", points: { fresh: 0, woody: 1, citrus: 2 } }
+                ]
+            },
+            {
+                id: 6,
+                text: "How strong do you want it?",
+                answers: [
+                    { text: "Subtle, close to the skin", points: { fresh: 2, woody: 0, citrus: 0 } },
+                    { text: "Medium, noticed up close", points: { fresh: 0, woody: 0, citrus: 2 } },
+                    { text: "Strong, leaves a trail", points: { fresh: 0, woody: 2, citrus: 0 } }
+                ]
+            },
+            {
+                id: 7,
+                text: "Choose a flavour you’d pick first",
+                answers: [
+                    { text: "Black tea or spice", points: { fresh: 0, woody: 1, citrus: 2 } },
+                    { text: "Ginger and fresh bite", points: { fresh: 2, woody: 0, citrus: 1 } },
+                    { text: "Raspberry or rose hint", points: { fresh: 1, woody: 2, citrus: 0 } }
+                ]
+            },
+            {
+                id: 8,
+                text: "Your wardrobe most days",
+                answers: [
+                    { text: "Whites, greys, simple basics", points: { fresh: 2, woody: 0, citrus: 0 } },
+                    { text: "Dark colours, boots, heavier fabrics", points: { fresh: 0, woody: 2, citrus: 0 } },
+                    { text: "Colourful, trainers, light layers", points: { fresh: 0, woody: 0, citrus: 2 } }
+                ]
+            },
+            {
+                id: 9,
+                text: "What annoys you in a fragrance?",
+                answers: [
+                    { text: "Too sweet", points: { fresh: 2, woody: 0, citrus: 1 } },
+                    { text: "Too sharp", points: { fresh: 1, woody: 2, citrus: 0 } },
+                    { text: "Too smoky", points: { fresh: 1, woody: 0, citrus: 2 } }
+                ]
+            }
+        ];
+
+        let currentQuestion = 0;
+        let scores = { woody: 0, fresh: 0, citrus: 0 };
+        let answers = {};
+        let q1Answer = null;
+
+        function startQuiz() {
+            document.getElementById('introContainer').style.display = 'none';
+            document.getElementById('quizContent').style.display = 'block';
+            document.getElementById('navigation').style.display = 'flex';
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const container = document.getElementById('questionContainer');
+            const question = questions[currentQuestion];
+            
+            // Analyse question importance
+            if (answers[question.id] !== undefined) {
+                const answer = question.answers[answers[question.id]];
+                const totalPoints = answer.points.woody + answer.points.fresh + answer.points.citrus;
+                analytics.questionImportance[currentQuestion] += totalPoints;
+            }
+            
+            const answersHtml = question.answers.map((answer, index) => `
+                <label class="answer-label" tabindex="0">
+                    <input 
+                        type="radio" 
+                        name="q${question.id}" 
+                        value="${index}"
+                        onchange="selectAnswer(${question.id}, ${index})"
+                    >
+                    <span class="answer-text">${answer.text}</span>
+                </label>
+            `).join('');
+            
+            container.innerHTML = `
+                <div class="question-container active">
+                    <h2 class="question-title">${question.text}</h2>
+                    <div class="answers" role="radiogroup" aria-label="${question.text}">
+                        ${answersHtml}
+                    </div>
+                </div>
+            `;
+            
+            if (answers[question.id] !== undefined) {
+                const radio = container.querySelector(`input[value="${answers[question.id]}"]`);
+                if (radio) radio.checked = true;
+                document.getElementById('nextBtn').disabled = false;
+            } else {
+                document.getElementById('nextBtn').disabled = true;
+            }
+            
+            updateProgress();
+            updateNavigation();
+        }
+
+        function updateProgress() {
+            const progressText = `Question ${currentQuestion + 1} of ${questions.length}`;
+            document.getElementById('progressText').textContent = progressText;
+            const progress = ((currentQuestion + 1) / questions.length) * 100;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+        }
+
+        function updateNavigation() {
+            document.getElementById('backBtn').disabled = currentQuestion === 0;
+            const nextBtn = document.getElementById('nextBtn');
+            if (currentQuestion === questions.length - 1) {
+                nextBtn.textContent = 'See Results';
+            } else {
+                nextBtn.textContent = 'Next';
+            }
+        }
+
+        function selectAnswer(questionId, answerIndex) {
+            answers[questionId] = answerIndex;
+            if (questionId === 1) {
+                q1Answer = questions[0].answers[answerIndex].text;
+            }
+            document.getElementById('nextBtn').disabled = false;
+        }
+
+        function nextQuestion() {
+            if (currentQuestion < questions.length - 1) {
+                currentQuestion++;
+                renderQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function previousQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                renderQuestion();
+            }
+        }
+
+        function calculateScores() {
+            scores = { woody: 0, fresh: 0, citrus: 0 };
+            
+            for (const [questionId, answerIndex] of Object.entries(answers)) {
+                const question = questions.find(q => q.id === parseInt(questionId));
+                const answer = question.answers[answerIndex];
+                
+                scores.woody += answer.points.woody || 0;
+                scores.fresh += answer.points.fresh || 0;
+                scores.citrus += answer.points.citrus || 0;
+            }
+        }
+
+        function getTieBreaker(winners) {
+            if (winners.length === 1) return winners[0];
+            
+            if (q1Answer === "Clean and bright") return "fresh";
+            if (q1Answer === "Warm and grounded") return "woody";
+            if (q1Answer === "Zesty and lively") return "citrus";
+            
+            return winners[0];
+        }
+
+        function getRunnerUp(primary) {
+            const sorted = Object.entries(scores)
+                .filter(([key]) => key !== primary)
+                .sort((a, b) => b[1] - a[1]);
+            
+            if (sorted.length === 0) return null;
+            
+            const runnerUpScore = sorted[0][1];
+            const runnerUpCandidates = sorted.filter(([key, score]) => score === runnerUpScore);
+            
+            if (runnerUpCandidates.length === 1) {
+                return runnerUpCandidates[0][0];
+            }
+            
+            const order = ['woody', 'fresh', 'citrus'].filter(key => 
+                runnerUpCandidates.some(([k]) => k === key)
+            );
+            return order[0];
+        }
+
+        function showResults() {
+            calculateScores();
+            
+            // Update analytics
+            analytics.totalQuizzes++;
+            
+            const maxScore = Math.max(scores.woody, scores.fresh, scores.citrus);
+            const winners = Object.entries(scores)
+                .filter(([key, score]) => score === maxScore)
+                .map(([key]) => key);
+            
+            const primary = getTieBreaker(winners);
+            const runnerUp = getRunnerUp(primary);
+            
+            // Update scent win counts
+            analytics.scentWins[primary]++;
+            
+            // Find most important question
+            const maxImportance = Math.max(...analytics.questionImportance);
+            const mostImportantQIndex = analytics.questionImportance.indexOf(maxImportance);
+            
+            // Save analytics
+            localStorage.setItem('mirsoAnalytics', JSON.stringify(analytics));
+            
+            // Render results
+            const primaryData = fragranceData[primary];
+            document.getElementById('primaryFragrance').textContent = primaryData.name;
+            document.getElementById('whyText').textContent = primaryData.why;
+            document.getElementById('shopUrl').value = primaryData.url;
+            document.getElementById('shopFragranceName').textContent = primaryData.name;
+            
+            // Set bottle visual
+            const bottleVisual = document.getElementById('bottleVisual');
+            bottleVisual.className = `bottle-visual ${primary}`;
+            
+            // Add tone line
+            const toneParagraph = document.createElement('p');
+            toneParagraph.style.cssText = 'margin: 1rem 0; font-size: 1rem; color: #2c3e50; font-weight: 500;';
+            toneParagraph.textContent = primaryData.tone;
+            document.querySelector('.fragrance-result').insertBefore(toneParagraph, document.getElementById('whyText'));
+            
+            const notesList = document.getElementById('notesList');
+            notesList.innerHTML = primaryData.notes
+                .map(note => `<li class="note-tag">${note}</li>`)
+                .join('');
+            
+            if (runnerUp && scores[runnerUp] > 0) {
+                const runnerUpData = fragranceData[runnerUp];
+                document.getElementById('runnerUpName').textContent = runnerUpData.name;
+                document.getElementById('runnerUpReason').textContent = runnerUpData.runnerUpReason;
+                document.getElementById('runnerUpContainer').style.display = 'block';
+                
+                const runnerUpShopBtn = document.createElement('button');
+                runnerUpShopBtn.className = 'btn-shop';
+                runnerUpShopBtn.textContent = `View ${runnerUpData.name}`;
+                runnerUpShopBtn.onclick = () => window.open(runnerUpData.url, '_blank');
+                runnerUpShopBtn.style.marginTop = '0.75rem';
+                document.getElementById('runnerUpContainer').appendChild(runnerUpShopBtn);
+            } else {
+                document.getElementById('runnerUpContainer').style.display = 'none';
+            }
+            
+            // Show analytics
+            document.getElementById('mostImportantQ').textContent = `Question ${mostImportantQIndex + 1}`;
+            document.getElementById('winningScentInfo').textContent = 
+                `${primaryData.name.split(' ')[2]} is the top pick in ${analytics.totalQuizzes} quiz${analytics.totalQuizzes > 1 ? 'zes' : ''} so far.`;
+            
+            // Debug scores
+            document.getElementById('debugWoody').textContent = scores.woody;
+            document.getElementById('debugFresh').textContent = scores.fresh;
+            document.getElementById('debugCitrus').textContent = scores.citrus;
+            
+            // Switch views
+            document.getElementById('introContainer').style.display = 'none';
+            document.getElementById('quizContent').style.display = 'none';
+            document.getElementById('navigation').style.display = 'none';
+            document.querySelector('.subtitle').style.display = 'none';
+            document.getElementById('resultsContainer').classList.add('active');
+        }
+
+        function submitEmail() {
+            const email = document.getElementById('emailInput').value;
+            const consent = document.getElementById('consentCheck').checked;
+            
+            if (!email || !email.includes('@')) {
+                alert('Please enter a valid email address');
+                return;
+            }
+            
+            if (!consent) {
+                alert('Please consent to receiving updates');
+                return;
+            }
+            
+            // Store email with result (in production, send to your backend)
+            const resultData = {
+                email: email,
+                scent: document.getElementById('primaryFragrance').textContent,
+                scores: scores,
+                timestamp: new Date().toISOString(),
+                answers: answers
+            };
+            
+            const stored = JSON.parse(localStorage.getItem('mirsoEmails')) || [];
+            stored.push(resultData);
+            localStorage.setItem('mirsoEmails', JSON.stringify(stored));
+            
+            document.getElementById('emailSuccess').style.display = 'block';
+            document.getElementById('emailInput').value = '';
+            document.getElementById('consentCheck').checked = false;
+        }
+
+        function toggleDebug() {
+            document.getElementById('debugView').classList.toggle('active');
+        }
+
+        function restartQuiz() {
+            currentQuestion = 0;
+            scores = { woody: 0, fresh: 0, citrus: 0 };
+            answers = {};
+            q1Answer = null;
+            
+            // Clear the tone paragraph if it exists
+            const tonePara = document.querySelector('.fragrance-result p');
+            if (tonePara && tonePara.textContent.includes('—')) {
+                tonePara.remove();
+            }
+            
+            document.getElementById('introContainer').style.display = 'block';
+            document.getElementById('quizContent').style.display = 'none';
+            document.getElementById('navigation').style.display = 'none';
+            document.querySelector('.subtitle').style.display = 'block';
+            document.getElementById('resultsContainer').classList.remove('active');
+            document.getElementById('emailSuccess').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
