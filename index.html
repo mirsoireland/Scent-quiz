@@ -892,39 +892,63 @@
             document.getElementById('navigation').style.display = 'none';
             document.querySelector('.subtitle').style.display = 'none';
             document.getElementById('resultsContainer').classList.add('active');
-        }
+      function submitEmail() {
+  const email = document.getElementById('emailInput').value.trim();
+  const consent = document.getElementById('consentCheck').checked;
 
-        function submitEmail() {
-            const email = document.getElementById('emailInput').value;
-            const consent = document.getElementById('consentCheck').checked;
-            
-            if (!email || !email.includes('@')) {
-                alert('Please enter a valid email address');
-                return;
-            }
-            
-            if (!consent) {
-                alert('Please consent to receiving updates');
-                return;
-            }
-            
-            // Store email with result (in production, send to your backend)
-            const resultData = {
-                email: email,
-                scent: document.getElementById('primaryFragrance').textContent,
-                scores: scores,
-                timestamp: new Date().toISOString(),
-                answers: answers
-            };
-            
-            const stored = JSON.parse(localStorage.getItem('mirsoEmails')) || [];
-            stored.push(resultData);
-            localStorage.setItem('mirsoEmails', JSON.stringify(stored));
-            
-            document.getElementById('emailSuccess').style.display = 'block';
-            document.getElementById('emailInput').value = '';
-            document.getElementById('consentCheck').checked = false;
-        }
+  if (!email || !email.includes('@')) {
+    alert('Please enter a valid email address');
+    return;
+  }
+
+  if (!consent) {
+    alert('Please consent to receiving updates');
+    return;
+  }
+
+  const primaryText = document.getElementById('primaryFragrance').textContent.trim();
+  const runnerUpTextEl = document.getElementById('runnerUpName');
+  const runnerUpText = runnerUpTextEl ? runnerUpTextEl.textContent.trim() : "";
+
+  const normalise = (txt) => {
+    const t = (txt || "").toLowerCase();
+    if (t.includes("woody")) return "Woody";
+    if (t.includes("fresh")) return "Fresh";
+    if (t.includes("citrus")) return "Citrus";
+    return "";
+  };
+
+  const result = normalise(primaryText);
+  let runnerUp = normalise(runnerUpText);
+
+  if (!runnerUp) {
+    const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+    const mapKey = (k) => k === "woody" ? "Woody" : k === "fresh" ? "Fresh" : "Citrus";
+    runnerUp = mapKey(sorted[1]?.[0] || sorted[0][0]);
+  }
+
+  fetch("https://mirso-scent-quiz.mirsoireland.workers.dev/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email,
+      consent: true,
+      result,
+      runnerUp,
+      sourceUrl: window.location.href
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (!data.ok) throw new Error();
+    document.getElementById('emailSuccess').style.display = 'block';
+    document.getElementById('emailInput').value = '';
+    document.getElementById('consentCheck').checked = false;
+  })
+  .catch(() => {
+    alert("Something went wrong. Please try again.");
+  });
+}
 
         function toggleDebug() {
             document.getElementById('debugView').classList.toggle('active');
