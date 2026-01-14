@@ -893,13 +893,16 @@
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              email,
-              consent: true,
-              result: primaryName,
-              runnerUp: runnerUpName,
-              sourceUrl: window.location.href
-            })
-          });
+  email,
+  consent: true,
+  event: "Quiz Result Received",           // ← this names your custom event
+  properties: {
+    primary_scent: primaryName,
+    runner_up_scent: runnerUpName || null,
+    quiz_source_url: window.location.href,
+    quiz_date: new Date().toISOString()
+  }
+})
 
           let data = null;
           try { data = await res.json(); } catch (e) {}
